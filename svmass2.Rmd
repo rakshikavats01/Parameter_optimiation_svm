@@ -1,0 +1,137 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library("kernlab")
+```
+
+
+```{r}
+bestAccuracy=0
+bestKernel=""
+bestNu=0
+bestEpsilon=0
+bestSample=0
+kernelList=c("rbfdot","polydot","tanhdot","laplacedot","anovadot","vanilladot")
+```
+```{r}
+library(openxlsx)
+myData1<-read.xlsx("C:\\sem6\\Predictive Analysis\\winequality-white.xlsx")
+myData<-as.data.frame(myData1)
+myData<-as.data.frame(sapply(myData,as.numeric))
+head(myData)
+
+```
+```{r}
+sample <- sample(c(TRUE, FALSE), nrow(myData), replace=TRUE, prob=c(0.7,0.3))
+train  <- myData[sample, ]
+test   <- myData[!sample, ]
+
+```
+
+
+```{r}
+fitnessFunction<-function(k,n,e,train,test)
+{
+  
+  trainX=train[,1:11]
+  trainY=as.factor(train[,12:12])
+  
+  testX=test[,1:11]
+  testY=as.factor(test[,12:12])
+  model<-ksvm(as.matrix(trainX),(trainY),kernel=k,nu=n,espilon=e)
+  predicted<-predict(model,testX)
+  
+ accuracy<-sum(as.numeric(predicted)==as.numeric(testY))
+ accuracy<-accuracy/nrow(test)
+  return (round(accuracy,2))
+}
+```
+
+```{r}
+metrics<-data.frame(sample<-c(),iteration<-c(),accuracy<-c(),BestKernel<-c(),BestNu<-c(),BestEpsilon<-c())
+```
+
+```{r}
+
+```
+
+
+```{r}
+for(j in 1:10)
+{
+  sample <- sample(c(TRUE, FALSE), nrow(myData), replace=TRUE, prob=c(0.7,0.3))
+train  <- myData[sample, ]
+test   <- myData[!sample, ]
+  for(i in 1:1000)
+  {
+    k=sample(kernelList,1)
+    
+    n=runif(1)
+    e=runif(1)
+    Accuracy=fitnessFunction(k,n,e,train,test)
+    print(Accuracy)
+    newRow<-c(j,i,Accuracy,k,n,e)
+    #print(newRow)
+   metrics<-rbind(metrics,newRow);
+    if(Accuracy>bestAccuracy)
+    {
+      bestKernel=k
+      bestNu=n
+      bestEpsilon=e
+      bestAccuracy=Accuracy;
+      bestSample=j
+    }
+    else{
+      
+    }
+  }
+}
+```
+```{r}
+```
+
+
+```{r}
+colnames(metrics)<-c("sample","iteration","accuracy","kernel","nu","epsilon")
+```
+```{r}
+metrics[which.max(metrics$accuracy),]
+
+```
+```{r}
+plt =metrics[metrics$sample==4,]
+```
+
+```{r}
+plt
+plot(plt$iteration,plt$accuracy,type='l',xlab="Iteration",ylab="Accuracy")
+```
+
+```{r}
+
+```
+```{r}
+
+```
+```{r}
+metrics$sample <- as.factor(metrics$sample)
+sam<-do.call(rbind, lapply(split(metrics,metrics$sample), function(x) {return(x[which.max(x$accuracy),])}))
+```
+```{r}
+sam$sample=as.numeric(sam$sample)
+sam %>% arrange(sample)
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
